@@ -94,4 +94,20 @@ void psearch_join(void);
  */
 void psearch_update_processed_count(unsigned int processed);
 
+/*
+ * Start the "hash loading" progress thread
+ * The thread will run until we have loaded all hashes
+ */
+void pload_run(uint64_t total_hashes, const char *phase_name);
+
+/*
+ * Wait for the hash loading progress thread to finish
+ */
+void pload_join(void);
+
+/*
+ * Hash loading: update the number of processed hashes
+ */
+void pload_update_processed_count(unsigned int processed);
+
 #endif	/* __PROGRESS_H__ */

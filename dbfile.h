@@ -45,6 +45,8 @@ struct stmts {
 	sqlite3_stmt *count_b_hashes;
 	sqlite3_stmt *count_e_hashes;
 	sqlite3_stmt *count_files;
+	sqlite3_stmt *count_duplicate_blocks;
+	sqlite3_stmt *count_duplicate_extents;
 	sqlite3_stmt *get_max_dedupe_seq;
 	sqlite3_stmt *delete_unscanned_files;
 	sqlite3_stmt *rename_file;

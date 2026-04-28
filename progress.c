@@ -13,6 +13,7 @@
  */
 #include <sys/ioctl.h>
 #include <stdatomic.h>
+#include <inttypes.h>
 
 #include "debug.h"
 #include "opt.h"
@@ -362,3 +363,73 @@ void psearch_update_processed_count(unsigned int processed)
 {
 	atomic_fetch_add(&search_processed, processed);
 }
+
+/*
+ * Used to track the status of hash loading from the database
+ */
+static _Atomic uint64_t load_total, load_processed;
+static const char *load_phase_name = "Loading hashes";
+
+static void *pload_progress_thread(void * p)
+{
+	static int last_pos = -1;
+
+	do {
+		int pos;
+		int width = 40;
+
+		if (load_total == 0) {
+			usleep(100);
+			continue;
+		}
+
+		pos = (float) load_processed / load_total * width;
+
+		/* Only update our status every width% */
+		if (pos > last_pos) {
+			last_pos = pos;
+
+			printf("\r%s: [", load_phase_name);
+			for(int i = 0; i < width; i++) {
+				if (i < pos)
+					printf("#");
+				else if (i == pos)
+					printf("%%");
+				else
+					printf(" ");
+			}
+			printf("] %"PRIu64"/%"PRIu64" (%.1f%%)",
+			       load_processed, load_total,
+			       (double)load_processed / load_total * 100.0);
+			fflush(stdout);
+		}
+
+		/* Do not waste too much cpu */
+		usleep(100);
+	} while (load_total != load_processed);
+	printf("\n");
+	return NULL;
+}
+
+void pload_run(uint64_t total_hashes, const char *phase_name)
+{
+	load_processed = 0;
+	load_total = total_hashes;
+	if (phase_name)
+		load_phase_name = phase_name;
+	else
+		load_phase_name = "Loading hashes";
+	printer = g_thread_new("progress_printer", pload_progress_thread, NULL);
+}
+
+void pload_join(void)
+{
+	g_thread_join(printer);
+	printer = NULL;
+}
+
+void pload_update_processed_count(unsigned int processed)
+{
+	atomic_fetch_add(&load_processed, processed);
+}
+

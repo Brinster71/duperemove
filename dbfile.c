@@ -19,6 +19,7 @@
 #include "results-tree.h"
 #include "file_scan.h"
 #include "debug.h"
+#include "progress.h"
 
 #include "dbfile.h"
 #include "opt.h"
@@ -525,6 +526,32 @@ struct dbhandle *dbfile_open_handle(char *filename)
 
 #define COUNT_FILES "select COUNT(*) from files;"
 	dbfile_prepare_stmt(count_files, COUNT_FILES);
+
+#define COUNT_DUPLICATE_BLOCKS						\
+"select COUNT(*) from blocks "						\
+"join files on fileid = id "						\
+"where dedupe_seq <= ?1 and blocks.digest in ( "			\
+"	select blocks.digest from blocks "				\
+"	join files on fileid = id "					\
+"	where dedupe_seq <= ?1 and blocks.digest in ( "			\
+"		select blocks.digest from blocks "			\
+"		join files on fileid = id "				\
+"		where dedupe_seq = ?1) "				\
+"	group by blocks.digest having count(*) > 1);"
+	dbfile_prepare_stmt(count_duplicate_blocks, COUNT_DUPLICATE_BLOCKS);
+
+#define COUNT_DUPLICATE_EXTENTS						\
+"select COUNT(*) from extents "						\
+"join files on fileid = id "						\
+"where dedupe_seq <= ?1 and (extents.digest, len) in ( "		\
+"	select extents.digest, len from extents "			\
+"	join files on fileid = id "					\
+"	where dedupe_seq <= ?1 and (extents.digest, len) in ( "		\
+"		select extents.digest, len from extents "		\
+"		join files on fileid = id "				\
+"		where dedupe_seq = ?1) "				\
+"	group by extents.digest, len having count(*) > 1);"
+	dbfile_prepare_stmt(count_duplicate_extents, COUNT_DUPLICATE_EXTENTS);
 
 #define GET_MAX_DEDUPE_SEQ "select max(dedupe_seq) from files;"
 	dbfile_prepare_stmt(get_max_dedupe_seq, GET_MAX_DEDUPE_SEQ);
@@ -1163,14 +1190,42 @@ int dbfile_load_block_hashes(struct dbhandle *db, struct hash_tree *hash_tree,
 {
 	int ret;
 	_cleanup_(sqlite3_reset_stmt) sqlite3_stmt *stmt = db->stmts.get_duplicate_blocks;
+	_cleanup_(sqlite3_reset_stmt) sqlite3_stmt *count_stmt = db->stmts.count_duplicate_blocks;
 	uint64_t loff;
 	int64_t fileid;
 	unsigned char *digest;
 	struct filerec *file;
+	uint64_t total_blocks = 0;
+	uint64_t processed = 0;
+	const unsigned int update_interval = 1000; /* Update progress every 1000 blocks */
+
+	/* First, count how many blocks we'll process */
+	ret = sqlite3_bind_int64(count_stmt, 1, seq);
+	if (ret) {
+		perror_sqlite(ret, "binding value for count");
+		return ret;
+	}
+
+	ret = sqlite3_step(count_stmt);
+	if (ret == SQLITE_ROW) {
+		total_blocks = sqlite3_column_int64(count_stmt, 0);
+	}
+	if (ret != SQLITE_ROW && ret != SQLITE_DONE) {
+		perror_sqlite(ret, "counting duplicate blocks");
+		return ret;
+	}
+
+	/* Start progress tracking if we have blocks to process */
+	if (total_blocks > 0) {
+		if (!quiet)
+			pload_run(total_blocks, "Loading duplicate block hashes");
+	}
 
 	ret = sqlite3_bind_int64(stmt, 1, seq);
 	if (ret) {
 		perror_sqlite(ret, "binding value");
+		if (total_blocks > 0 && !quiet)
+			pload_join();
 		return ret;
 	}
 
@@ -1186,20 +1241,43 @@ int dbfile_load_block_hashes(struct dbhandle *db, struct hash_tree *hash_tree,
 				eprintf("Error loading filerec (%"
 					PRIu64") from db\n",
 					fileid);
+				if (total_blocks > 0 && !quiet)
+					pload_join();
 				return ret;
 			}
 		}
 
 		ret = insert_hashed_block(hash_tree, digest, file, loff);
-		if (ret)
+		if (ret) {
+			if (total_blocks > 0 && !quiet)
+				pload_join();
 			return ENOMEM;
+		}
+
+		processed++;
+		/* Update progress periodically */
+		if (total_blocks > 0 && !quiet && (processed % update_interval == 0)) {
+			pload_update_processed_count(update_interval);
+		}
 	}
+
+	/* Update any remaining progress */
+	if (total_blocks > 0 && !quiet && (processed % update_interval != 0)) {
+		pload_update_processed_count(processed % update_interval);
+	}
+
 	if (ret != SQLITE_DONE) {
 		perror_sqlite(ret, "looking up hash");
+		if (total_blocks > 0 && !quiet)
+			pload_join();
 		return ret;
 	}
 
 	sort_file_hash_heads(hash_tree);
+
+	/* Finish progress tracking */
+	if (total_blocks > 0 && !quiet)
+		pload_join();
 
 	return 0;
 }
@@ -1209,14 +1287,42 @@ int dbfile_load_extent_hashes(struct dbhandle *db, struct results_tree *res,
 {
 	int ret;
 	_cleanup_(sqlite3_reset_stmt) sqlite3_stmt *stmt = db->stmts.get_duplicate_extents;
+	_cleanup_(sqlite3_reset_stmt) sqlite3_stmt *count_stmt = db->stmts.count_duplicate_extents;
 	uint64_t loff, poff, len;
 	int64_t fileid;
 	unsigned char *digest;
 	struct filerec *file;
+	uint64_t total_extents = 0;
+	uint64_t processed = 0;
+	const unsigned int update_interval = 1000; /* Update progress every 1000 extents */
+
+	/* First, count how many extents we'll process */
+	ret = sqlite3_bind_int64(count_stmt, 1, seq);
+	if (ret) {
+		perror_sqlite(ret, "binding value for count");
+		return ret;
+	}
+
+	ret = sqlite3_step(count_stmt);
+	if (ret == SQLITE_ROW) {
+		total_extents = sqlite3_column_int64(count_stmt, 0);
+	}
+	if (ret != SQLITE_ROW && ret != SQLITE_DONE) {
+		perror_sqlite(ret, "counting duplicate extents");
+		return ret;
+	}
+
+	/* Start progress tracking if we have extents to process */
+	if (total_extents > 0) {
+		if (!quiet)
+			pload_run(total_extents, "Loading duplicate extent hashes");
+	}
 
 	ret = sqlite3_bind_int64(stmt, 1, seq);
 	if (ret) {
 		perror_sqlite(ret, "binding value");
+		if (total_extents > 0 && !quiet)
+			pload_join();
 		return ret;
 	}
 
@@ -1234,18 +1340,41 @@ int dbfile_load_extent_hashes(struct dbhandle *db, struct results_tree *res,
 				eprintf("Error loading filerec (%"
 					PRIu64") from db\n",
 					fileid);
+				if (total_extents > 0 && !quiet)
+					pload_join();
 				return ret;
 			}
 		}
 
 		ret = insert_one_result(res, digest, file, loff, len, poff);
-		if (ret)
+		if (ret) {
+			if (total_extents > 0 && !quiet)
+				pload_join();
 			return ENOMEM;
+		}
+
+		processed++;
+		/* Update progress periodically */
+		if (total_extents > 0 && !quiet && (processed % update_interval == 0)) {
+			pload_update_processed_count(update_interval);
+		}
 	}
+
+	/* Update any remaining progress */
+	if (total_extents > 0 && !quiet && (processed % update_interval != 0)) {
+		pload_update_processed_count(processed % update_interval);
+	}
+
 	if (ret != SQLITE_DONE) {
 		perror_sqlite(ret, "looking up hash");
+		if (total_extents > 0 && !quiet)
+			pload_join();
 		return ret;
 	}
+
+	/* Finish progress tracking */
+	if (total_extents > 0 && !quiet)
+		pload_join();
 
 	return 0;
 }
