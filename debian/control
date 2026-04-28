@@ -1,0 +1,28 @@
+Source: duperemove
+Section: admin
+Priority: optional
+Maintainer: Your Name <your.email@example.com>
+Build-Depends: debhelper-compat (= 13),
+               libglib2.0-dev,
+               libsqlite3-dev,
+               uuid-dev,
+               libxxhash-dev,
+               pkg-config
+Standards-Version: 4.6.0
+Homepage: https://github.com/Brinster71/duperemove
+Vcs-Git: https://github.com/Brinster71/duperemove.git
+Vcs-Browser: https://github.com/Brinster71/duperemove
+
+Package: duperemove
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Tools for deduplicating extents in filesystems
+ Duperemove is a tool for finding duplicated extents and submitting them for
+ deduplication. When given a list of files it will hash their contents on a
+ block by block basis and compare those hashes to each other, finding and
+ categorizing extents that match each other.
+ .
+ This version includes progress indicators for hash loading operations, which
+ is helpful when working with large hashfiles (18GB+). Progress bars show
+ current count, total count, and percentage to help identify if the process
+ is running or has crashed during lengthy operations.

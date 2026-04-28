@@ -1,0 +1,9 @@
+duperemove (0.13.1-1) unstable; urgency=medium
+
+  * Added progress indicators for hash loading phase
+  * Shows progress when loading duplicate block and extent hashes
+  * Progress bars display current count, total count, and percentage
+  * Particularly useful for large hashfiles (18GB+)
+  * Helps users determine if process is running or has crashed
+
+ -- Your Name <your.email@example.com>  Mon, 28 Apr 2026 15:00:00 -0400
