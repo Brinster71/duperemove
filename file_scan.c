@@ -41,7 +41,7 @@
 #include <libmount/libmount.h>
 #include <sys/sysmacros.h>
 #include <uuid/uuid.h>
-#include <bsd/sys/queue.h>
+#include <sys/queue.h>
 
 #include <glib.h>
 
