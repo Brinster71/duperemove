@@ -1,4 +1,4 @@
-duperemove (0.13.1-1) unstable; urgency=medium
+duperemove-progressbar (0.13.1-1) unstable; urgency=medium
 
   * Added progress indicators for hash loading phase
   * Shows progress when loading duplicate block and extent hashes

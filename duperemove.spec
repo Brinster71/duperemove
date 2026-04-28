@@ -1,7 +1,7 @@
-Name:           duperemove
+Name:           duperemove-progressbar
 Version:        0.13.1
 Release:        1%{?dist}
-Summary:        Tools for deduplicating extents in filesystems
+Summary:        Tools for deduplicating extents in filesystems (with progress indicators)
 
 License:        GPL-2.0
 URL:            https://github.com/Brinster71/duperemove

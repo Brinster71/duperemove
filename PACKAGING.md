@@ -1,6 +1,6 @@
-# Building Duperemove Packages
+# Building Duperemove-Progressbar Packages
 
-This directory contains packaging files and scripts for building both RPM and DEB packages of duperemove with progress indicator support.
+This directory contains packaging files and scripts for building both RPM and DEB packages of duperemove-progressbar with progress indicator support.
 
 ## Quick Start
 
@@ -8,13 +8,13 @@ This directory contains packaging files and scripts for building both RPM and DE
 ```bash
 ./build-rpm.sh
 ```
-Output will be in `~/rpmbuild/RPMS/x86_64/duperemove-*.rpm`
+Output will be in `~/rpmbuild/RPMS/x86_64/duperemove-progressbar-*.rpm`
 
 ### Building DEB (Debian/Ubuntu)
 ```bash
 ./build-deb.sh
 ```
-Output will be in `../duperemove_*.deb`
+Output will be in `../duperemove-progressbar_*.deb`
 
 ## Manual Building
 
@@ -33,15 +33,15 @@ Output will be in `../duperemove_*.deb`
 
 3. **Create source tarball:**
    ```bash
-   tar --exclude='.git' --transform 's,^,duperemove-0.13.1/,' \
-       -czf ~/rpmbuild/SOURCES/duperemove-0.13.1.tar.gz .
+   tar --exclude='.git' --transform 's,^,duperemove-progressbar-0.13.1/,' \
+       -czf ~/rpmbuild/SOURCES/duperemove-progressbar-0.13.1.tar.gz .
    ```
 
 4. **Build RPM:**
    ```bash
-   cp duperemove.spec ~/rpmbuild/SPECS/
+   cp duperemove.spec ~/rpmbuild/SPECS/duperemove-progressbar.spec
    cd ~/rpmbuild/SPECS
-   rpmbuild -ba duperemove.spec
+   rpmbuild -ba duperemove-progressbar.spec
    ```
 
 ### DEB Package

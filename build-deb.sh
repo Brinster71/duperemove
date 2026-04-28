@@ -16,7 +16,7 @@ sudo apt-get install -y debhelper devscripts build-essential \
 echo "Cleaning previous builds..."
 cd "$(dirname "$0")"
 make clean || true
-rm -rf debian/.debhelper debian/duperemove debian/files debian/*.log \
+rm -rf debian/.debhelper debian/duperemove-progressbar debian/files debian/*.log \
     debian/*.substvars debian/debhelper-build-stamp
 
 # Build package
@@ -27,4 +27,4 @@ echo ""
 echo "=== Build Complete! ==="
 echo "DEB package is in parent directory:"
 cd ..
-ls -lh duperemove*.deb 2>/dev/null || echo "Note: Check parent directory for .deb file"
+ls -lh duperemove-progressbar*.deb 2>/dev/null || echo "Note: Check parent directory for .deb file"

@@ -1,4 +1,4 @@
-Source: duperemove
+Source: duperemove-progressbar
 Section: admin
 Priority: optional
 Maintainer: Your Name <your.email@example.com>
@@ -13,7 +13,7 @@ Homepage: https://github.com/Brinster71/duperemove
 Vcs-Git: https://github.com/Brinster71/duperemove.git
 Vcs-Browser: https://github.com/Brinster71/duperemove
 
-Package: duperemove
+Package: duperemove-progressbar
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Tools for deduplicating extents in filesystems
