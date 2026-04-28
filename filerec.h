@@ -19,7 +19,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <glib.h>
-#include <bsd/sys/queue.h>
+#include <sys/queue.h>
 #include "rbtree.h"
 #include "results-tree.h"
 
