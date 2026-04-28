@@ -7,7 +7,7 @@ override_dh_auto_build:
 	$(MAKE) PREFIX=/usr
 
 override_dh_auto_install:
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/duperemove PREFIX=/usr SBINDIR=/usr/sbin MANDIR=/usr/share/man
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/duperemove-progressbar PREFIX=/usr SBINDIR=/usr/sbin MANDIR=/usr/share/man
 
 override_dh_auto_clean:
 	$(MAKE) clean || true
