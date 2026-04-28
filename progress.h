@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "glib.h"
+#include <glib.h>
 
 enum pscan_thread_status {
 	thread_idle,
