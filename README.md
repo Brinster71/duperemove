@@ -18,6 +18,20 @@ Duperemove can also take input from the [fdupes](https://github.com/adrianlopezr
 
 See [the duperemove man page](http://markfasheh.github.io/duperemove/duperemove.html) for further details about running duperemove.
 
+## Progress Indicators
+
+This version of duperemove includes progress indicators for the hash loading phase, which is particularly useful when working with large hashfiles (multiple GB). When loading duplicate block and extent hashes from the database, you'll see real-time progress bars showing:
+
+- Current number of hashes loaded
+- Total number of hashes to process
+- Completion percentage
+
+Example output:
+```
+Loading duplicate block hashes: [##########%                              ] 12500/50000 (25.0%)
+```
+
+This helps you monitor long-running operations and determine if the process is actively running or has encountered an issue, which is especially valuable for operations that can take many hours with large datasets.
 
 # Requirements
 
