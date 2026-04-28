@@ -222,9 +222,10 @@ static void filerec_free(struct filerec *file)
 
 void free_all_filerecs(void)
 {
-	struct filerec *file, *tmp;
+	struct filerec *file;
 
-	SLIST_FOREACH_SAFE(file, &filerec_head, rec_list, tmp) {
+	while ((file = SLIST_FIRST(&filerec_head)) != NULL) {
+		SLIST_REMOVE_HEAD(&filerec_head, rec_list);
 		filerec_free(file);
 	}
 }
